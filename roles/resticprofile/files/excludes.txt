@@ -1,0 +1,204 @@
+# linuxbrew
+/home/linuxbrew/
+
+# Large media files
+*.iso
+*.qcow2
+*.mp4
+*.mkv
+*.avi
+*.flv
+*.webm
+*.mp3
+*.flac
+*.aac
+*.wma
+
+# Browser caches and temporary data
+.ansible
+.cache
+.thumbnails
+.mozilla/firefox/*/OfflineCache/
+.mozilla/firefox/*/startupCache/
+.mozilla/firefox/*/storage/
+.config/chromium/*/Cache/
+.config/chromium/*/Code Cache/
+.config/chromium/*/Service Worker/
+.config/google-chrome/*/Cache/
+.config/google-chrome/*/Code Cache/
+.config/google-chrome/*/Service Worker/
+.config/BraveSoftware/Brave-Browser/*/Cache/
+.config/microsoft-edge/*/Cache/
+.config/mozilla/firefox/*/OfflineCache/
+
+# IDE and editor caches
+.config/Code/CachedData/
+.config/Code/Cache/
+.config/Code/CachedExtensions/
+.config/Code/CachedExtensionVSIXs/
+.config/Code/User/workspaceStorage/
+.vscode/extensions/*/node_modules/
+.local/share/code-server/CachedData/
+.local/share/JetBrains/
+
+# Temporary and swap files
+.tmp/
+.temp/
+tmp/
+temp/
+.backup*
+*.tmp
+*.temp
+*~
+.*.swp
+.*.swo
+*.bak
+*.backup
+
+# Development artifacts
+node_modules/
+.npm/
+.yarn/
+.pnpm-store/
+.gradle/
+.m2/repository/
+target/
+build/
+dist/
+out/
+.build/
+*.egg-info/
+.eggs/
+
+# Python artifacts
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.pytest_cache/
+.tox/
+.mypy_cache/
+.pylint.d/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+virtualenv/
+
+# Language-specific registries
+.cargo/registry/
+.cargo/git/
+.rustup
+go/pkg/
+go/bin/
+.cargo
+.conda
+
+# Container and VM images
+.local/share/containers/
+.local/share/libvirt/images/
+.docker/
+.podman/
+.vagrant.d/boxes/
+.minikube/
+.kube/cache/
+
+# Cloud and deployment tools (rebuilds)
+.pulumi
+.terraform/
+.terragrunt-cache
+.kops/
+.helm/cache/
+
+# Large application caches
+Downloads/
+downloads/
+.local/share/Steam/
+.steam/
+.local/share/lutris/
+Games/
+
+# Flatpak
+.var/app
+# backup betterbird
+!.var/app/eu.betterbird.Betterbird/
+# but exclude betterbird cruft (flatpak runtime overhead)
+.var/app/eu.betterbird.Betterbird/.ld.so/
+.var/app/eu.betterbird.Betterbird/.local/
+.var/app/eu.betterbird.Betterbird/cache/
+.var/app/eu.betterbird.Betterbird/config/
+.var/app/eu.betterbird.Betterbird/data/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/ImapMail/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/Mail/Local Folders/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/cache/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/cache2/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/startupCache/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/OfflineCache/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/jumpListCache/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/storage/default/*/cache/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/datareporting/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/crashes/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/minidumps/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/saved-telemetry-pings/
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/*.sqlite-wal
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/*.sqlite-shm
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/lock
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/.parentlock
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/session*.json
+.var/app/eu.betterbird.Betterbird/.thunderbird/*/sessionCheckpoints.json
+.local/share/flatpak
+
+# Indexing and tracking (rebuilt on access)
+.local/share/baloo/
+.local/share/tracker/
+.local/share/tracker3/
+.local/share/zeitgeist/
+
+# Session and runtime data
+.xsession-errors*
+.local/share/xorg/
+.local/state/
+.dbus/
+.gvfs/
+.Xauthority
+.Xauthority.lock
+
+# System and user-specific
+.config/systemd/user/default.target.wants/
+.config/systemd/user/sockets.target.wants/
+.Trash
+.Trash-*/
+.externals
+.var/.Trash*
+
+# Built-in package caches
+.local/share/nix/
+.local/share/nvim/
+.local/share/tmux/plugins/
+.local/share/evolution/
+.local/share/soar
+.local/share/bluefin-cli
+
+# Fonts
+.local/share/fonts
+
+# Email caches (IMAP)
+.thunderbird/*/ImapMail/
+.thunderbird/*/Imap/
+.mozilla/thunderbird/*/ImapMail/
+.mozilla/thunderbird/*/Imap/
+
+# Cloud storage (redundant with cloud provider)
+OneDrive
+Dropbox
+.local/share/pCloud/
+.local/share/mega/
+
+# Misc application caches and configs to skip
+.config/@filen
+.config/WowUpCf
+.config/discord
+.config/obsidian/Cache
+.xlcore

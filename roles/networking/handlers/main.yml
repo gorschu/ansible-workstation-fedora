@@ -1,0 +1,17 @@
+---
+# networking handlers
+
+- name: Reload NetworkManager
+  become: true
+  ansible.builtin.systemd_service:
+    name: NetworkManager
+    state: restarted
+  notify: Wait for network connectivity
+
+- name: Wait for network connectivity
+  ansible.builtin.command: ping -c 1 {{ networking_connectivity_check_host }}
+  register: networking_result
+  until: networking_result.rc == 0
+  retries: 30
+  delay: 3
+  changed_when: false

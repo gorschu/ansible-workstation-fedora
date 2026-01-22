@@ -1,0 +1,30 @@
+---
+# Ghostty terminal emulator
+
+- name: Install ghostty
+  when: ghostty_state == 'present'
+  become: true
+  block:
+    - name: Enable ghostty COPR repository
+      community.general.copr:
+        name: scottames/ghostty
+        state: enabled
+
+    - name: Install ghostty package
+      ansible.builtin.dnf:
+        name: ghostty
+        state: present
+
+- name: Remove ghostty
+  when: ghostty_state == 'absent'
+  become: true
+  block:
+    - name: Remove ghostty package
+      ansible.builtin.dnf:
+        name: ghostty
+        state: absent
+
+    - name: Disable ghostty COPR repository
+      community.general.copr:
+        name: scottames/ghostty
+        state: disabled

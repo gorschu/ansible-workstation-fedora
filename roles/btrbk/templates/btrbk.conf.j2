@@ -1,0 +1,17 @@
+# btrbk configuration for root subvolume
+# Minimal snapshots - system is declarative via chezmoi/ansible
+# Important data lives on ZFS with zrepl
+
+timestamp_format long
+transaction_log /var/log/btrbk.log
+
+# Retention: every 4 hours, keep 2 dailies, then purge
+snapshot_preserve_min 4h
+snapshot_preserve 2d
+
+volume /mnt/btrfs_root
+  snapshot_dir snapshots
+  snapshot_create always
+
+  subvolume root
+    snapshot_name {{ ansible_facts['hostname'] }}_root

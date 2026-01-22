@@ -1,0 +1,42 @@
+#!/bin/bash
+{{ ansible_managed | comment }}
+
+# Apprise notification script for resticprofile
+APPRISE=/opt/resticprofile/apprise-venv/bin/apprise
+PUSHOVER_URL="pover://{{ resticprofile_pushover_user_key }}@{{ resticprofile_pushover_token }}"
+
+PROFILE_NAME="${1}"
+PROFILE_COMMAND="${2}"
+STATUS="${3}" # "success" or "failed"
+ERROR_MSG="${4:-}"
+
+HOSTNAME="{{ ansible_hostname }}"
+
+case "${STATUS}" in
+success)
+  TITLE="${PROFILE_NAME}/${PROFILE_COMMAND} Completed"
+  MESSAGE="<b><font color=\"#00aa00\">✓ Backup Successful</font></b>
+
+<b>Host:</b> {{ ansible_hostname }}
+<b>Profile:</b> ${PROFILE_NAME}
+<b>Command:</b> ${PROFILE_COMMAND}"
+  PUSHOVER_URL="${PUSHOVER_URL}?priority=0&format=html&ttl=600"
+  ;;
+failed)
+  TITLE="${PROFILE_NAME}/${PROFILE_COMMAND} FAILED"
+  MESSAGE="<b><font color=\"#ff3333\">✗ Backup Failed</font></b>
+
+<b>Host:</b> {{ ansible_hostname }}
+<b>Profile:</b> ${PROFILE_NAME}
+<b>Command:</b> ${PROFILE_COMMAND}
+
+<b>Error:</b> ${ERROR_MSG}"
+  PUSHOVER_URL="${PUSHOVER_URL}?priority=1&sound=siren&retry=300&expire=3600&format=html"
+  ;;
+*)
+  echo "Usage: $0 <profile_name> <command> <success|failed> [error_message]"
+  exit 1
+  ;;
+esac
+
+${APPRISE} -i html --title "${TITLE}" --body "${MESSAGE}" "${PUSHOVER_URL}"

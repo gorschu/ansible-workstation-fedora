@@ -1,0 +1,16 @@
+---
+base_system_utils:
+  - gdisk
+  - parted
+
+base_cli_utils:
+  - zsh
+  - neovim
+  - bsdtar
+  - yp-tools
+
+base_networking_utils:
+  - sshfs
+  - NetworkManager-tui
+  - network-manager-applet
+  - wireguard-tools

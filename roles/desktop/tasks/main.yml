@@ -1,0 +1,14 @@
+---
+# Desktop applications
+
+- name: Install GUI applications
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ desktop_gui_applications }}"
+    state: present
+
+- name: Install GNOME applications/dependencies
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ desktop_gnome_applications_dependencies }}"
+    state: present

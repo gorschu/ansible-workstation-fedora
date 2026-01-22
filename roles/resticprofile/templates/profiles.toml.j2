@@ -1,0 +1,65 @@
+{{ ansible_managed | comment }}
+# Resticprofile configuration for system-level backup of /home
+
+[global]
+  prevent-sleep = true
+  send-timeout = "30s"
+  cleanup-cache = true
+  ionice-class = 2 # best-effort
+  ionice-level = 6
+  priority = "low" # nice 10
+
+[default]
+  status-file = "/var/lib/resticprofile/status.json"
+  extended-status = true
+  retry-lock = "30m"
+
+{% for backend in resticprofile_backend_names %}
+[workstation-{{ backend }}]
+  inherit = "default"
+  repository = "{{ resticprofile_backend_credentials[backend].repository }}"
+  env-file = ["/etc/resticprofile/{{ backend }}.env"]
+  initialize = true
+  systemd-drop-in-files = ["99-skip-metered.conf"]
+
+  [workstation-{{ backend }}.backup]
+    source = ["/home", "/etc"]
+    exclude-file = "/etc/resticprofile/excludes.txt"
+    exclude-caches = true
+    one-file-system = true
+
+    tag = ["host:{{ ansible_hostname }}", "system-backup"]
+
+    limit-upload = 3840
+    schedule = "*-*-* 0/3:00:00"
+    schedule-permission = "system"
+    schedule-after-network-online = true
+    run-after = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND success"
+    run-after-fail = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND failed $ERROR_MESSAGE"
+
+  [workstation-{{ backend }}.check]
+    read-data-subset = "1/7"
+    schedule = "daily"
+    schedule-permission = "system"
+    schedule-after-network-online = true
+    run-after = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND success"
+    run-after-fail = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND failed $ERROR_MESSAGE"
+
+  [workstation-{{ backend }}.forget]
+    schedule = "Mon,Wed,Fri *-*-* 13:00:00"
+    schedule-permission = "system"
+    schedule-after-network-online = true
+    keep-hourly = 48
+    keep-weekly = 4
+    keep-monthly = 12
+    keep-yearly = 2
+    run-after = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND success"
+    run-after-fail = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND failed $ERROR_MESSAGE"
+
+  [workstation-{{ backend }}.prune]
+    schedule = "Mon,Wed,Fri *-*-* 14:00:00"
+    schedule-permission = "system"
+    schedule-after-network-online = true
+    run-after = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND success"
+    run-after-fail = "/etc/resticprofile/hooks/notify.sh $PROFILE_NAME $PROFILE_COMMAND failed $ERROR_MESSAGE"
+{% endfor %}

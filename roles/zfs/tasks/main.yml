@@ -1,0 +1,10 @@
+---
+# ZFS role - OpenZFS on Fedora with zrepl
+
+- name: Configure ZFS
+  ansible.builtin.import_tasks: zfs.yml
+  tags: [zfs]
+
+- name: Configure zrepl
+  ansible.builtin.import_tasks: zrepl.yml
+  tags: [zrepl]

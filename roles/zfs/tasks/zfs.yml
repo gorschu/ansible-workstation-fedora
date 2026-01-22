@@ -1,0 +1,137 @@
+---
+# ZFS core - OpenZFS repository, packages, kernel lock, and services for Fedora
+
+- name: Install ZFS
+  when: zfs_state == 'present'
+  become: true
+  block:
+    - name: Remove zfs-fuse if present (conflicts with OpenZFS)
+      ansible.builtin.dnf:
+        name: zfs-fuse
+        state: absent
+
+    - name: Check if ZFS repo is installed
+      ansible.builtin.stat:
+        path: /etc/yum.repos.d/zfs.repo
+      register: zfs_repo_check
+
+    - name: Install ZFS repository
+      ansible.builtin.dnf:
+        name: "{{ zfs_repo_url }}"
+        state: present
+        disable_gpg_check: true
+      when: not zfs_repo_check.stat.exists
+
+    - name: Install kernel headers (required for DKMS)
+      ansible.builtin.dnf:
+        name:
+          - kernel-devel
+          - kernel-headers
+        state: present
+
+    - name: Install ZFS packages
+      ansible.builtin.dnf:
+        name: "{{ packages_zfs }}"
+        state: present
+
+    - name: Load ZFS kernel module
+      community.general.modprobe:
+        name: zfs
+        state: present
+
+    # Kernel version lock to prevent ZFS breakage
+    # As per https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html
+    - name: Install dnf versionlock plugin
+      ansible.builtin.dnf:
+        name: python3-dnf-plugin-versionlock
+        state: present
+      when: zfs_kernel_lock | bool
+
+    - name: Check current kernel versionlock status
+      ansible.builtin.command: dnf versionlock list
+      register: zfs_versionlock_status
+      changed_when: false
+      failed_when: false
+      when: zfs_kernel_lock | bool
+
+    - name: Lock kernel packages to current version
+      ansible.builtin.command: dnf versionlock add kernel kernel-core kernel-modules kernel-devel kernel-headers
+      when:
+        - zfs_kernel_lock | bool
+        - "'kernel-' not in zfs_versionlock_status.stdout"
+      register: zfs_kernel_lock_result
+      changed_when: zfs_kernel_lock_result.rc == 0
+
+    - name: Deploy zfs-load-key service for encrypted pools
+      ansible.builtin.copy:
+        src: zfs-load-key.service
+        dest: /etc/systemd/system/zfs-load-key.service
+        mode: "0644"
+      notify: Reload systemd
+
+    - name: Flush handlers to reload systemd
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable ZFS services
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: true
+      loop:
+        - zfs-import-cache.service
+        - zfs-load-key.service
+        - zfs-mount.service
+        - zfs-import.target
+        - zfs.target
+        - zfs-zed.service
+
+    # Create datasets if they don't exist
+    # Recovery: zfs receive from backup, then ansible skips existing datasets
+    - name: Create parent data dataset
+      community.general.zfs:
+        name: "{{ zrepl.poolname }}/data"
+        state: present
+        extra_zfs_properties:
+          mountpoint: "/{{ zrepl.poolname }}/data"
+          canmount: "on"
+
+    - name: Create data child datasets
+      community.general.zfs:
+        name: "{{ zrepl.poolname }}/data/{{ item }}"
+        state: present
+        extra_zfs_properties:
+          canmount: "on"
+      loop: "{{ zfs_data_datasets }}"
+
+- name: Remove ZFS
+  when: zfs_state == 'absent'
+  become: true
+  block:
+    - name: Disable ZFS services
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: false
+        state: stopped
+      loop:
+        - zfs-zed.service
+        - zfs-load-key.service
+        - zfs-import-cache.service
+        - zfs-mount.service
+        - zfs-import.target
+        - zfs.target
+      failed_when: false
+
+    - name: Remove zfs-load-key service
+      ansible.builtin.file:
+        path: /etc/systemd/system/zfs-load-key.service
+        state: absent
+
+    - name: Remove kernel versionlock
+      ansible.builtin.command: dnf versionlock delete kernel kernel-core kernel-modules kernel-devel kernel-headers
+      failed_when: false
+      changed_when: false
+
+    - name: Remove ZFS packages
+      ansible.builtin.dnf:
+        name: "{{ packages_zfs }}"
+        state: absent
+      failed_when: false

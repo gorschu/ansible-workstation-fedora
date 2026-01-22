@@ -1,0 +1,30 @@
+---
+# Vicinae - universal IPC launcher for Wayland compositors
+
+- name: Install vicinae
+  when: vicinae_state == 'present'
+  become: true
+  block:
+    - name: Enable vicinae COPR repository
+      community.general.copr:
+        name: scottames/vicinae
+        state: enabled
+
+    - name: Install vicinae package
+      ansible.builtin.dnf:
+        name: vicinae
+        state: present
+
+- name: Remove vicinae
+  when: vicinae_state == 'absent'
+  become: true
+  block:
+    - name: Remove vicinae package
+      ansible.builtin.dnf:
+        name: vicinae
+        state: absent
+
+    - name: Disable vicinae COPR repository
+      community.general.copr:
+        name: scottames/vicinae
+        state: disabled

@@ -1,0 +1,23 @@
+---
+- name: Configure Visual Studio Code
+  become: true
+  block:
+    - name: Add Microsoft GPG key
+      ansible.builtin.rpm_key:
+        state: "{{ 'present' if vscode_state == 'present' else 'absent' }}"
+        key: https://packages.microsoft.com/keys/microsoft.asc
+
+    - name: Add Visual Studio Code repository
+      ansible.builtin.yum_repository:
+        name: vscode
+        description: Visual Studio Code
+        baseurl: https://packages.microsoft.com/yumrepos/vscode
+        enabled: "{{ 'yes' if vscode_state == 'present' else 'no' }}"
+        gpgcheck: true
+        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+        state: "{{ 'present' if vscode_state == 'present' else 'absent' }}"
+
+    - name: Install Visual Studio Code
+      ansible.builtin.dnf:
+        name: code
+        state: "{{ vscode_state }}"

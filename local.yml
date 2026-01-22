@@ -1,0 +1,51 @@
+---
+# Ansible playbook for traditional Fedora Workstation setup
+# Mirrors the blue-build Silverblue configuration
+#
+# Usage: ansible-playbook local.yml --ask-become-pass
+# Usage (specific roles): ansible-playbook local.yml --tags base,multimedia -K
+
+- name: Configure Fedora Workstation
+  hosts: localhost
+  connection: local
+
+  vars_files:
+    - vars/general.yml
+
+  roles:
+    - role: networking
+      tags: [networking, tailscale]
+      vars:
+        networking_tailscale_oauth_client_id: "{{ vault_tailscale_oauth_workstation.client_id }}"
+        networking_tailscale_oauth_client_secret: "{{ vault_tailscale_oauth_workstation.client_secret }}"
+    - role: base
+      tags: [base, repos]
+    - role: notebook
+      tags: [notebook, power]
+    - role: desktop
+      tags: [desktop, gui]
+    - role: multimedia
+      tags: [multimedia, codecs]
+    - role: hyprland
+      tags: [hyprland, wayland]
+    - role: niri
+      tags: [niri, wayland]
+    - role: vicinae
+      tags: [desktop, vicinae]
+    - role: ghostty
+      tags: [desktop, ghostty]
+    - role: beyondcompare
+      tags: [desktop, beyondcompare]
+    - role: vscode
+      tags: [desktop, vscode]
+    - role: zfs
+      tags: [zfs, zrepl, storage]
+    - role: btrbk
+      tags: [btrbk, storage, backup]
+    - role: resticprofile
+      tags: [resticprofile, backup]
+    - role: smartcard
+      tags: [smartcard, gpg]
+    - role: virtualization
+      tags: [virtualization, incus, docker, containers]
+# vim: set ft=yaml.ansible:

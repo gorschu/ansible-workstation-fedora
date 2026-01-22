@@ -1,0 +1,25 @@
+---
+# Incus configuration
+virtualization_incus_state: present  # present or absent
+
+# Users granted Incus administrative access. Override in inventory or play vars to customize.
+virtualization_incus_admin_users: >-
+  {{
+    ([ansible_user_id] if ansible_user_id is defined else [])
+    | select('ne', 'root')
+    | list
+  }}
+
+# Subordinate UID/GID range assigned to root for unprivileged Incus containers.
+virtualization_incus_root_subid_range: "root:1000000:1000000000"
+
+# Docker configuration
+virtualization_docker_state: absent  # present or absent
+
+# Users granted Docker access. Override in inventory or play vars to customize.
+virtualization_docker_users: >-
+  {{
+    ([ansible_user_id] if ansible_user_id is defined else [])
+    | select('ne', 'root')
+    | list
+  }}

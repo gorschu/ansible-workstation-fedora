@@ -1,0 +1,11 @@
+---
+- name: Smartcard reload systemd
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Smartcard restart pcscd service
+  become: true
+  ansible.builtin.systemd_service:
+    name: pcscd.service
+    state: restarted

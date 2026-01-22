@@ -1,0 +1,289 @@
+---
+# Resticprofile - system-level backup management for /home
+
+- name: Resticprofile setup
+  become: true
+  block:
+    - name: Install resticprofile
+      when: resticprofile_state == 'present'
+      block:
+        - name: Install restic and Python packages
+          ansible.builtin.dnf:
+            name:
+              - restic
+              - python3-pip
+            state: present
+
+        - name: Create resticprofile bin directory
+          ansible.builtin.file:
+            path: "{{ resticprofile_bin_path }}"
+            state: directory
+            mode: "0755"
+            owner: root
+            group: root
+
+        - name: Check if resticprofile binary already installed with correct version
+          ansible.builtin.command:
+            cmd: "{{ resticprofile_bin_path }}/resticprofile version"
+          register: resticprofile_installed_version
+          changed_when: false
+          failed_when: false
+
+        - name: Update resticprofile if needed
+          when: resticprofile_installed_version.rc != 0 or
+                resticprofile_version not in resticprofile_installed_version.stdout
+          block:
+            - name: Create temp file for binary download
+              ansible.builtin.tempfile:
+                state: file
+                suffix: .tar.gz
+              register: resticprofile_temp_archive
+              changed_when: false
+
+            - name: Download resticprofile binary
+              ansible.builtin.get_url:
+                url: "https://github.com/creativeprojects/resticprofile/releases/download/v\
+                  {{ resticprofile_version }}/resticprofile_{{ resticprofile_version }}_\
+                  linux_amd64.tar.gz"
+                dest: "{{ resticprofile_temp_archive.path }}"
+                mode: "0600"
+
+            - name: Extract resticprofile binary
+              ansible.builtin.unarchive:
+                src: "{{ resticprofile_temp_archive.path }}"
+                dest: "{{ resticprofile_bin_path }}"
+                remote_src: true
+
+            - name: Fix ownership and permissions of extracted binary
+              ansible.builtin.file:
+                path: "{{ resticprofile_bin_path }}"
+                state: directory
+                owner: root
+                group: root
+                mode: "0755"
+                recurse: true
+
+            - name: Cleanup download
+              ansible.builtin.file:
+                path: "{{ resticprofile_temp_archive.path }}"
+                state: absent
+              changed_when: false
+
+        - name: Create resticprofile config directory
+          ansible.builtin.file:
+            path: /etc/resticprofile
+            state: directory
+            mode: "0700"
+            owner: root
+            group: root
+
+        - name: Create resticprofile hooks directory
+          ansible.builtin.file:
+            path: /etc/resticprofile/hooks
+            state: directory
+            mode: "0700"
+            owner: root
+            group: root
+
+        - name: Create apprise venv directory
+          ansible.builtin.file:
+            path: /opt/resticprofile/apprise-venv
+            state: directory
+            mode: "0755"
+            owner: root
+            group: root
+
+        - name: Install apprise in isolated venv
+          ansible.builtin.pip:
+            name: apprise
+            virtualenv: /opt/resticprofile/apprise-venv
+            virtualenv_command: /usr/bin/python3 -m venv
+            state: present
+
+        - name: Create resticprofile state directory
+          ansible.builtin.file:
+            path: /var/lib/resticprofile
+            state: directory
+            mode: "0755"
+            owner: root
+            group: root
+
+        - name: Set resticprofile credentials from vault
+          ansible.builtin.set_fact:
+            resticprofile_backend_credentials: "{{ resticprofile_backends }}"
+            resticprofile_backend_names: "{{ resticprofile_backends.keys() | list }}"
+            resticprofile_pushover_token: "{{ resticprofile_pushover.token }}"
+            resticprofile_pushover_user_key: "{{ resticprofile_pushover.user_key }}"
+          no_log: true
+
+        - name: Create temp file for config comparison
+          ansible.builtin.tempfile:
+            state: file
+            suffix: .toml
+          register: resticprofile_temp_config
+          changed_when: false
+
+        - name: Config comparison and deployment
+          block:
+            - name: Dry-run template profiles.toml to temp location
+              ansible.builtin.template:
+                src: profiles.toml.j2
+                dest: "{{ resticprofile_temp_config.path }}"
+                mode: "0600"
+              changed_when: false
+
+            - name: Check current profiles.toml
+              ansible.builtin.stat:
+                path: /etc/resticprofile/profiles.toml
+                checksum_algorithm: sha256
+              register: resticprofile_current_config
+
+            - name: Check new profiles.toml
+              ansible.builtin.stat:
+                path: "{{ resticprofile_temp_config.path }}"
+                checksum_algorithm: sha256
+              register: resticprofile_new_config
+
+            - name: Determine if config needs update
+              vars:
+                current_exists: "{{ resticprofile_current_config.stat.exists }}"
+                checksums_match: >-
+                  {{ resticprofile_current_config.stat.checksum | default('') ==
+                     resticprofile_new_config.stat.checksum }}
+              ansible.builtin.set_fact:
+                resticprofile_config_needs_update: >-
+                  {{ not current_exists or not checksums_match }}
+
+            - name: Update resticprofile config if changed
+              when: resticprofile_config_needs_update | bool
+              block:
+                - name: Unschedule all timers before updating config
+                  ansible.builtin.command:
+                    cmd: "{{ resticprofile_bin_path }}/resticprofile unschedule --all"
+                  failed_when: false
+                  changed_when: true
+
+                - name: Deploy profiles.toml with restricted permissions
+                  ansible.builtin.template:
+                    src: profiles.toml.j2
+                    dest: /etc/resticprofile/profiles.toml
+                    mode: "0600"
+                    owner: root
+                    group: root
+                  register: resticprofile_profiles_deploy
+                  notify: Systemd daemon-reload
+
+                - name: Flush handlers before running resticprofile schedule
+                  ansible.builtin.meta: flush_handlers
+
+                - name: Regenerate systemd units
+                  ansible.builtin.command:
+                    cmd: >-
+                      {{ resticprofile_bin_path }}/resticprofile schedule --all
+                      --start --reload
+                  register: resticprofile_schedule_result
+                  changed_when: resticprofile_schedule_result.rc == 0
+                  failed_when: resticprofile_schedule_result.rc != 0
+
+          always:
+            - name: Cleanup temp config file
+              ansible.builtin.file:
+                path: "{{ resticprofile_temp_config.path }}"
+                state: absent
+              changed_when: false
+
+        - name: Deploy notification script
+          ansible.builtin.template:
+            src: notify.sh.j2
+            dest: /etc/resticprofile/hooks/notify.sh
+            mode: "0755"
+            owner: root
+            group: root
+
+        - name: Deploy metered connection check script
+          ansible.builtin.template:
+            src: check-metered.sh.j2
+            dest: /etc/resticprofile/hooks/check-metered.sh
+            mode: "0755"
+            owner: root
+            group: root
+
+        - name: Deploy excludes.txt
+          ansible.builtin.copy:
+            src: excludes.txt
+            dest: /etc/resticprofile/excludes.txt
+            mode: "0600"
+            owner: root
+            group: root
+
+        - name: Deploy systemd drop-in file for metered connection detection
+          ansible.builtin.template:
+            src: 99-skip-metered.conf.j2
+            dest: /etc/resticprofile/99-skip-metered.conf
+            mode: "0644"
+            owner: root
+            group: root
+          notify: Systemd daemon-reload
+
+        - name: Deploy backend-specific env files with restricted permissions
+          ansible.builtin.template:
+            src: backend.env.j2
+            dest: "/etc/resticprofile/{{ item }}.env"
+            mode: "0600"
+            owner: root
+            group: root
+          vars:
+            backend: "{{ item }}"
+          loop: "{{ resticprofile_backend_names }}"
+          no_log: true
+
+        - name: Check if status.json exists
+          ansible.builtin.stat:
+            path: /var/lib/resticprofile/status.json
+          register: resticprofile_status_json_stat
+
+        - name: Ensure status.json has appropriate permissions
+          ansible.builtin.file:
+            path: /var/lib/resticprofile/status.json
+            mode: "0644"
+            owner: root
+            group: root
+          when: resticprofile_status_json_stat.stat.exists
+
+    - name: Uninstall resticprofile
+      when: resticprofile_state == 'absent'
+      block:
+        - name: Unschedule all resticprofile timers
+          ansible.builtin.command:
+            cmd: "{{ resticprofile_bin_path }}/resticprofile unschedule --all"
+          changed_when: true
+          failed_when: false
+          register: resticprofile_unschedule_result
+
+        - name: Display unschedule output
+          ansible.builtin.debug:
+            msg: "{{ resticprofile_unschedule_result.stdout_lines }}"
+
+        - name: Systemd daemon-reload after unscheduling
+          ansible.builtin.systemd_service:
+            daemon_reload: true
+
+        - name: Remove resticprofile config directory
+          ansible.builtin.file:
+            path: /etc/resticprofile
+            state: absent
+
+        - name: Remove resticprofile state directory
+          ansible.builtin.file:
+            path: /var/lib/resticprofile
+            state: absent
+
+        - name: Remove resticprofile binary directory
+          ansible.builtin.file:
+            path: "{{ resticprofile_path }}"
+            state: absent
+
+        - name: Remove restic package
+          ansible.builtin.dnf:
+            name: restic
+            state: absent

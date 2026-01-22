@@ -1,0 +1,164 @@
+---
+# Networking configuration - hostname, NetworkManager, and tailscale
+
+- name: Configure NetworkManager
+  become: true
+  block:
+    - name: Create wired ethernet connections for each interface
+      community.general.nmcli:
+        conn_name: "wired-{{ item }}"
+        ifname: "{{ item }}"
+        type: ethernet
+        autoconnect: "yes"
+        autoconnect_priority: 100
+        method4: auto
+        method6: auto
+        state: present
+      loop: "{{ ansible_interfaces | select('match', networking_wired_interface_pattern) }}"
+      notify: Reload NetworkManager
+
+    - name: Create WiFi connections from vault
+      community.general.nmcli:
+        conn_name: "{{ item.0.key }}"
+        ifname: "{{ item.1 }}"
+        type: wifi
+        ssid: "{{ item.0.value.ssid }}"
+        wifi_sec:
+          key-mgmt: wpa-psk
+          psk: "{{ item.0.value.psk }}"
+        autoconnect: "yes"
+        autoconnect_priority: 10
+        method4: auto
+        method6: auto
+        state: present
+      loop: >-
+        {{ networking_wifi_networks | dict2items
+           | product(ansible_interfaces | select('match', networking_wifi_interface_pattern))
+           | list }}
+      when: networking_wifi_networks is defined
+      notify: Reload NetworkManager
+
+    - name: Check current metered status for WiFi connections
+      ansible.builtin.command:
+        cmd: nmcli -t -f connection.metered connection show "{{ item.key }}"
+      loop: "{{ networking_wifi_networks | dict2items }}"
+      when: networking_wifi_networks is defined
+      register: networking_wifi_metered_status
+      changed_when: false
+      failed_when: false
+
+    - name: Configure metered status for WiFi connections
+      ansible.builtin.command:
+        cmd: >-
+          nmcli connection modify "{{ item.item.key }}"
+          connection.metered {{ 'yes' if item.item.value.metered | default(false) else 'no' }}
+      loop: "{{ networking_wifi_metered_status.results }}"
+      when:
+        - networking_wifi_networks is defined
+        - item.rc == 0
+        - >-
+          (item.item.value.metered | default(false) and item.stdout != 'connection.metered:yes') or
+          (not (item.item.value.metered | default(false)) and item.stdout != 'connection.metered:no')
+      changed_when: true
+      notify: Reload NetworkManager
+
+    - name: Check if WireGuard connection exists
+      ansible.builtin.command:
+        cmd: nmcli connection show wg-home
+      register: networking_wg_home_exists
+      changed_when: false
+      failed_when: false
+      when: networking_wireguard_home_enabled | default(false)
+
+- name: Configure WireGuard VPN from 1Password
+  become: false
+  when:
+    - networking_wireguard_home_enabled | default(false)
+    - networking_wg_home_exists.rc != 0
+  block:
+    - name: Get FRITZ!Box Home VPN item UUID from 1Password
+      ansible.builtin.command:
+        cmd: op item list --vault Home --format json
+      register: networking_wg_home_items
+      changed_when: false
+
+    - name: Extract WireGuard item UUID
+      ansible.builtin.set_fact:
+        networking_wg_home_item_id: >-
+          {{ (networking_wg_home_items.stdout | from_json)
+             | selectattr('title', 'equalto', 'FRITZ!Box Home VPN')
+             | map(attribute='id')
+             | first }}
+
+    - name: Fetch WireGuard config from 1Password
+      ansible.builtin.command:
+        cmd: op read "op://Home/{{ networking_wg_home_item_id }}/wg-home.conf"
+      register: networking_wg_home_config_result
+      changed_when: false
+      no_log: true
+
+    - name: Set WireGuard config fact
+      ansible.builtin.set_fact:
+        networking_wg_home_config: "{{ networking_wg_home_config_result.stdout }}"
+      no_log: true
+
+- name: Import and configure home WireGuard connection
+  become: true
+  when:
+    - networking_wireguard_home_enabled | default(false)
+    - networking_wg_home_exists.rc != 0
+  block:
+    - name: Write WireGuard config to temporary file
+      ansible.builtin.copy:
+        content: "{{ networking_wg_home_config }}"
+        dest: /tmp/wg-home.conf
+        mode: "0600"
+      no_log: true
+
+    - name: Import WireGuard connection
+      ansible.builtin.command:
+        cmd: nmcli connection import type wireguard file /tmp/wg-home.conf
+      changed_when: true
+      notify: Reload NetworkManager
+
+    - name: Disable auto-connect for WireGuard connection
+      ansible.builtin.command:
+        cmd: nmcli connection modify wg-home connection.autoconnect no
+      changed_when: true
+
+  always:
+    - name: Remove temporary WireGuard config file
+      ansible.builtin.file:
+        path: /tmp/wg-home.conf
+        state: absent
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"
+  become: true
+  when: hostname is defined
+
+- name: Add hostname to /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: "^127\\.0\\.1\\.1\\s"
+    line: "127.0.1.1 {{ hostname }}"
+    state: present
+  become: true
+  when: hostname is defined
+
+- name: Install and configure Tailscale
+  when: networking_tailscale_oauth_client_id is defined and networking_tailscale_oauth_client_secret is defined
+  become: true
+  block:
+    - name: Enable Tailscale with OAuth
+      ansible.builtin.include_role:
+        name: artis3n.tailscale.machine
+      vars:
+        tailscale_authkey: "{{ networking_tailscale_oauth_client_secret }}"
+        tailscale_tags:
+          - "workstation"
+        tailscale_oauth_ephemeral: false
+        tailscale_args: >-
+          --hostname={{ hostname }}
+          --accept-routes={{ 'true' if networking_tailscale_accept_routes else 'false' }}

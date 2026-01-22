@@ -1,0 +1,6 @@
+{{ ansible_managed | comment }}
+# Systemd drop-in to skip backup on metered connections
+
+[Service]
+# Non-zero exit code (a metered connection is up) will skip the service
+ExecCondition=/etc/resticprofile/hooks/check-metered.sh

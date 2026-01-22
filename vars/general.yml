@@ -1,0 +1,41 @@
+---
+# System-level configuration variables
+#
+# Hyprland window manager state: present or absent
+# Set to 'absent' to remove Hyprland and its ecosystem
+hyprland_state: absent
+
+# Niri window manager state: present or absent
+# Set to 'absent' to remove Niri and its ecosystem
+niri_state: present
+niri_use_dms: true
+
+# Resticprofile backup management state: present or absent
+resticprofile_state: absent
+resticprofile_version: "0.32.0"
+resticprofile_path: "/opt/resticprofile"
+resticprofile_bin_path: "{{ resticprofile_path }}/bin"
+
+# BeyondCompare installation state: present or absent
+beyondcompare_state: present
+
+# Hybrid storage setup:
+# - BTRFS root with btrbk snapshots (safety net, minimal retention)
+# - ZFS for important data (tank/data/*) with zrepl snapshots
+# - /home stays on btrfs, important data symlinked from ZFS via tmpfiles.d
+
+# ZFS storage management state: present or absent
+# Run bootstrap/02-zfs-setup.sh first to create the pool
+zfs_state: present
+
+# zrepl snapshot/replication daemon state: present or absent
+# Requires zfs_state: present
+zrepl_state: present
+
+# Lock kernel to ZFS-compatible version
+# Prevents kernel updates from breaking ZFS module
+zfs_kernel_lock: true
+
+# btrbk (btrfs snapshots) state: present or absent
+# Minimal snapshots for root subvolume (every 4h, keep 2 dailies)
+btrbk_state: present

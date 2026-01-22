@@ -1,0 +1,10 @@
+---
+desktop_gui_applications:
+  - solaar
+  - firefox
+  - kitty
+
+desktop_gnome_applications_dependencies:
+  - gnome-tweaks
+  - gnome-extensions-app
+  - libgda-sqlite

@@ -1,0 +1,43 @@
+---
+- name: Install Docker container runtime and tooling
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - moby-engine
+      - docker-compose
+    state: "{{ virtualization_docker_state }}"
+  when: virtualization_docker_state == 'present'
+
+- name: Ensure docker group exists
+  become: true
+  ansible.builtin.group:
+    name: docker
+    state: "{{ virtualization_docker_state }}"
+
+- name: Add users to docker group
+  become: true
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ virtualization_docker_users }}"
+  when:
+    - virtualization_docker_state == 'present'
+    - virtualization_docker_users | length > 0
+
+- name: Enable and start Docker service
+  become: true
+  ansible.builtin.systemd_service:
+    name: docker.service
+    enabled: true
+    state: started
+  when: virtualization_docker_state == 'present'
+
+- name: Remove Docker packages
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - moby-engine
+      - docker-compose
+    state: absent
+  when: virtualization_docker_state == 'absent'

@@ -1,0 +1,26 @@
+---
+# Multimedia codecs and hardware acceleration
+
+- name: Install multimedia codecs and hardware acceleration
+  become: true
+  block:
+    - name: Replace ffmpeg-free with full ffmpeg from RPM Fusion
+      ansible.builtin.dnf:
+        name:
+          - ffmpeg
+          - gstreamer1-plugins-bad-free
+          - gstreamer1-plugins-bad-freeworld
+          - gstreamer1-plugins-good
+          - gstreamer1-plugins-ugly
+          - gstreamer1-libav
+        state: present
+        allowerasing: true
+
+    - name: Install hardware acceleration with full codec support
+      ansible.builtin.dnf:
+        name:
+          - libva-intel-driver
+          - mesa-va-drivers-freeworld
+          - mesa-vdpau-drivers-freeworld
+        state: present
+        allowerasing: true

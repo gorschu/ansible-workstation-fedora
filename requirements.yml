@@ -1,0 +1,6 @@
+---
+collections:
+  - name: community.general
+    version: ">=11.0.0"
+  - name: ansible.posix
+  - name: artis3n.tailscale

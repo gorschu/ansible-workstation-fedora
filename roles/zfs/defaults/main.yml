@@ -1,0 +1,42 @@
+---
+# ZFS role defaults
+
+# ZFS state - enable via host_vars or general.yml
+zfs_state: absent
+
+# zrepl for ZFS snapshots/replication
+zrepl_state: absent
+
+# Lock kernel to ZFS-compatible version
+# Prevents kernel updates from breaking ZFS module
+zfs_kernel_lock: true
+
+# zrepl configuration
+# Hybrid setup: /home stays on btrfs, important data on ZFS at tank/data/*
+# Symlinked into ~/ via user-tmpfiles.d (chezmoi)
+zrepl:
+  poolname: tank
+  snapshot:
+    interval: 15m
+    prefix: zrepl_
+    datasets:
+      - data
+  external:
+    mount_path: /mnt/backup
+    dataset: backup/zrepl
+  # Pruning: keep all for 1h, then 1/hour for 24h, 1/day for 30d, 1/week for 6 months
+  prune_grid: "1x1h(keep=all) | 24x1h | 30x1d | 24x7d"
+
+# ZFS data datasets to create (under tank/data/)
+zfs_data_datasets:
+  - projects
+  - documents
+  - media
+
+# Fedora ZFS packages
+packages_zfs:
+  - zfs
+  - kernel-devel
+
+# ZFS repo URL for Fedora (uses ansible_distribution_major_version)
+zfs_repo_url: "https://zfsonlinux.org/fedora/zfs-release-2-6.fc{{ ansible_distribution_major_version }}.noarch.rpm"

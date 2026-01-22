@@ -1,0 +1,17 @@
+---
+- name: Ensure pcscd drop-in directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/pcscd.service.d
+    state: directory
+    mode: "0755"
+
+- name: Install pcscd auto-exit override
+  become: true
+  ansible.builtin.copy:
+    src: pcscd-auto-exit.conf
+    dest: /etc/systemd/system/pcscd.service.d/auto-exit.conf
+    mode: "0644"
+  notify:
+    - Smartcard reload systemd
+    - Smartcard restart pcscd service

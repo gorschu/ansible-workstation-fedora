@@ -1,0 +1,20 @@
+---
+# Networking role defaults
+
+# Host to ping for network connectivity checks
+networking_connectivity_check_host: "1.1.1.1"
+
+# Interface name patterns for automatic detection
+# Wired ethernet interface pattern
+networking_wired_interface_pattern: '^en'
+
+# WiFi interface pattern
+networking_wifi_interface_pattern: '^wl'
+
+# WireGuard Home VPN configuration
+# Set to true to fetch wg-home.conf from 1Password and configure the VPN
+networking_wireguard_home_enabled: true
+
+# Tailscale configuration
+# Accept routes from other devices
+networking_tailscale_accept_routes: true

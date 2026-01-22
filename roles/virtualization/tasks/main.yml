@@ -1,0 +1,8 @@
+---
+- name: Include Incus tasks
+  ansible.builtin.include_tasks: incus.yml
+  when: virtualization_incus_state is defined
+
+- name: Include Docker tasks
+  ansible.builtin.include_tasks: docker.yml
+  when: virtualization_docker_state is defined

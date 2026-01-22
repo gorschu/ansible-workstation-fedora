@@ -1,0 +1,25 @@
+#!/bin/bash
+{{ ansible_managed | comment }}
+# Check if any active network connection is metered
+# Exit code 0: no metered connections (safe to proceed)
+# Exit code 1: metered connection detected (skip backup)
+
+set -euo pipefail
+
+# Get all connected network devices (excluding loopback)
+devices=$(nmcli -t -f DEVICE,STATE device status | grep ":connected$" | cut -d: -f1 | grep -v "^lo$")
+
+for device in $devices; do
+  # Query the metered status of the device
+  metered=$(nmcli -t -f GENERAL.METERED device show "$device" 2>/dev/null | cut -d: -f2)
+
+  # Check if the connection is metered (either explicitly or guessed)
+  if [ "$metered" = "yes (guessed)" ] || [ "$metered" = "yes" ]; then
+    echo "Skipping operation: Connection on $device is metered" >&2
+    exit 1
+  fi
+done
+
+# No metered connections found
+echo "Commencing operation: No metered connections found" >&2
+exit 0

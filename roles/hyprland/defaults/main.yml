@@ -1,0 +1,26 @@
+---
+# Hyprland role defaults
+
+# State of Hyprland installation: present or absent
+hyprland_state: absent
+
+# Package list
+hyprland_packages:
+  - hyprland
+  - uwsm
+  - hyprland-contrib
+  - hyprland-plugins
+  - hyprland-autoname-workspaces
+  - xdg-desktop-portal-hyprland
+  - hyprpaper
+  - hypridle
+  - hyprlock
+  - hyprshot
+  - hyprsysteminfo
+  - hyprdim
+  - hyprnome
+  - mako
+  - waybar-git
+  - swww
+  - cliphist
+  - fuzzel

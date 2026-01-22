@@ -1,0 +1,62 @@
+---
+# zrepl - ZFS snapshot and replication daemon
+
+- name: Install zrepl
+  when:
+    - zfs_state == 'present'
+    - zrepl_state == 'present'
+  become: true
+  block:
+    - name: Add zrepl repository
+      ansible.builtin.copy:
+        src: zrepl.repo
+        dest: /etc/yum.repos.d/zrepl.repo
+        mode: "0644"
+
+    - name: Install zrepl
+      ansible.builtin.dnf:
+        name: zrepl
+        state: present
+
+    - name: Ensure /etc/zrepl exists
+      ansible.builtin.file:
+        path: /etc/zrepl
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Deploy zrepl configuration
+      ansible.builtin.template:
+        src: zrepl.yml.j2
+        dest: /etc/zrepl/zrepl.yml
+        mode: "0644"
+      notify: Restart zrepl
+
+    - name: Enable zrepl service
+      ansible.builtin.systemd_service:
+        name: zrepl.service
+        enabled: true
+        state: started
+
+- name: Remove zrepl
+  when: zrepl_state == 'absent'
+  become: true
+  block:
+    - name: Disable zrepl service
+      ansible.builtin.systemd_service:
+        name: zrepl.service
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Remove zrepl package
+      ansible.builtin.dnf:
+        name: zrepl
+        state: absent
+      failed_when: false
+
+    - name: Remove zrepl repository
+      ansible.builtin.file:
+        path: /etc/yum.repos.d/zrepl.repo
+        state: absent

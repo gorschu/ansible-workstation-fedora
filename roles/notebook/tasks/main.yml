@@ -1,0 +1,16 @@
+---
+- name: Install batenergy suspend script
+  become: true
+  when: ansible_form_factor == "Notebook"
+  block:
+    - name: Ensure systemd sleep hook directory exists
+      ansible.builtin.file:
+        path: /usr/lib/systemd/system-sleep
+        state: directory
+        mode: "0755"
+
+    - name: Download batenergy sleep hook
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/equaeghe/batenergy/master/batenergy.sh
+        dest: /usr/lib/systemd/system-sleep/99-batenergy.sh
+        mode: "0755"

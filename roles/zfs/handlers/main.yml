@@ -1,0 +1,13 @@
+---
+# ZFS role handlers
+
+- name: Reload systemd
+  become: true
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Restart zrepl
+  become: true
+  ansible.builtin.systemd_service:
+    name: zrepl.service
+    state: restarted
