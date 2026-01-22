@@ -1,6 +1,11 @@
 ---
 # Networking configuration - hostname, NetworkManager, and tailscale
 
+- name: Load vault secrets
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/vault.yml"
+  no_log: true
+
 - name: Configure NetworkManager
   become: true
   block:
@@ -32,17 +37,17 @@
         method6: auto
         state: present
       loop: >-
-        {{ networking_wifi_networks | dict2items
+        {{ vault_networking_wifi_networks | dict2items
            | product(ansible_interfaces | select('match', networking_wifi_interface_pattern))
            | list }}
-      when: networking_wifi_networks is defined
+      when: vault_networking_wifi_networks is defined
       notify: Reload NetworkManager
 
     - name: Check current metered status for WiFi connections
       ansible.builtin.command:
         cmd: nmcli -t -f connection.metered connection show "{{ item.key }}"
-      loop: "{{ networking_wifi_networks | dict2items }}"
-      when: networking_wifi_networks is defined
+      loop: "{{ vault_networking_wifi_networks | dict2items }}"
+      when: vault_networking_wifi_networks is defined
       register: networking_wifi_metered_status
       changed_when: false
       failed_when: false
@@ -54,7 +59,7 @@
           connection.metered {{ 'yes' if item.item.value.metered | default(false) else 'no' }}
       loop: "{{ networking_wifi_metered_status.results }}"
       when:
-        - networking_wifi_networks is defined
+        - vault_networking_wifi_networks is defined
         - item.rc == 0
         - >-
           (item.item.value.metered | default(false) and item.stdout != 'connection.metered:yes') or
@@ -148,14 +153,14 @@
   when: hostname is defined
 
 - name: Install and configure Tailscale
-  when: networking_tailscale_oauth_client_id is defined and networking_tailscale_oauth_client_secret is defined
+  when: vault_tailscale_oauth_workstation is defined
   become: true
   block:
     - name: Enable Tailscale with OAuth
       ansible.builtin.include_role:
         name: artis3n.tailscale.machine
       vars:
-        tailscale_authkey: "{{ networking_tailscale_oauth_client_secret }}"
+        tailscale_authkey: "{{ vault_tailscale_oauth_workstation.client_secret }}"
         tailscale_tags:
           - "workstation"
         tailscale_oauth_ephemeral: false

@@ -1,0 +1,13 @@
+---
+# Global variables for all hosts
+# Role-specific settings (including state toggles) are in role defaults
+# Override per-host in host_vars/
+
+timezone: Europe/Berlin
+
+# Primary user
+primary_user: gorschu
+primary_user_uid: 1000
+primary_user_groups:
+  - wheel
+  - video

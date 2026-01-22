@@ -1,23 +1,20 @@
 ---
-# Ansible playbook for traditional Fedora Workstation setup
-# Mirrors the blue-build Silverblue configuration
+# Ansible playbook for Fedora Workstation setup
 #
-# Usage: ansible-playbook local.yml --ask-become-pass
-# Usage (specific roles): ansible-playbook local.yml --tags base,multimedia -K
+# Usage: ./run-playbook.sh
+# Usage (specific roles): ./run-playbook.sh --tags base,multimedia
+# Usage (specific host): ./run-playbook.sh -l hostname
 
 - name: Configure Fedora Workstation
-  hosts: localhost
-  connection: local
+  hosts: all
+  gather_facts: true
 
-  vars_files:
-    - vars/general.yml
+  # group_vars/all/main.yml and host_vars/ auto-loaded by Ansible
+  # vault.yml loaded by roles that need it (networking, resticprofile)
 
   roles:
     - role: networking
       tags: [networking, tailscale]
-      vars:
-        networking_tailscale_oauth_client_id: "{{ vault_tailscale_oauth_workstation.client_id }}"
-        networking_tailscale_oauth_client_secret: "{{ vault_tailscale_oauth_workstation.client_secret }}"
     - role: base
       tags: [base, repos]
     - role: notebook

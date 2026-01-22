@@ -1,6 +1,12 @@
 ---
 # Resticprofile - system-level backup management for /home
 
+- name: Load vault secrets
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/vault.yml"
+  when: resticprofile_state == 'present'
+  no_log: true
+
 - name: Resticprofile setup
   become: true
   block:
@@ -110,10 +116,10 @@
 
         - name: Set resticprofile credentials from vault
           ansible.builtin.set_fact:
-            resticprofile_backend_credentials: "{{ resticprofile_backends }}"
-            resticprofile_backend_names: "{{ resticprofile_backends.keys() | list }}"
-            resticprofile_pushover_token: "{{ resticprofile_pushover.token }}"
-            resticprofile_pushover_user_key: "{{ resticprofile_pushover.user_key }}"
+            resticprofile_backend_credentials: "{{ vault_resticprofile_backends }}"
+            resticprofile_backend_names: "{{ vault_resticprofile_backends.keys() | list }}"
+            resticprofile_pushover_token: "{{ vault_resticprofile_pushover.token }}"
+            resticprofile_pushover_user_key: "{{ vault_resticprofile_pushover.user_key }}"
           no_log: true
 
         - name: Create temp file for config comparison

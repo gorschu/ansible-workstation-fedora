@@ -1,0 +1,12 @@
+---
+# resticprofile role defaults
+
+# resticprofile state: present or absent
+resticprofile_state: absent
+
+# resticprofile version
+resticprofile_version: "0.32.0"
+
+# Installation paths
+resticprofile_path: "/opt/resticprofile"
+resticprofile_bin_path: "{{ resticprofile_path }}/bin"

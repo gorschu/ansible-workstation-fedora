@@ -1,0 +1,5 @@
+---
+# btrbk role defaults
+
+# btrbk state: present or absent
+btrbk_state: absent
