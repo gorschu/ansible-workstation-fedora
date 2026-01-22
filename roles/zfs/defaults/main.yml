@@ -5,7 +5,7 @@
 zfs_state: absent
 
 # zrepl for ZFS snapshots/replication
-zrepl_state: absent
+zfs_zrepl_state: absent
 
 # Lock kernel to ZFS-compatible version
 # Prevents kernel updates from breaking ZFS module
@@ -14,7 +14,7 @@ zfs_kernel_lock: true
 # zrepl configuration
 # Hybrid setup: /home stays on btrfs, important data on ZFS at tank/data/*
 # Symlinked into ~/ via user-tmpfiles.d (chezmoi)
-zrepl:
+zfs_zrepl:
   poolname: tank
   snapshot:
     interval: 15m
@@ -34,7 +34,7 @@ zfs_data_datasets:
   - media
 
 # Fedora ZFS packages
-packages_zfs:
+zfs_packages:
   - zfs
   - kernel-devel
 

@@ -4,7 +4,7 @@
 - name: Install zrepl
   when:
     - zfs_state == 'present'
-    - zrepl_state == 'present'
+    - zfs_zrepl_state == 'present'
   become: true
   block:
     - name: Add zrepl repository
@@ -40,7 +40,7 @@
         state: started
 
 - name: Remove zrepl
-  when: zrepl_state == 'absent'
+  when: zfs_zrepl_state == 'absent'
   become: true
   block:
     - name: Disable zrepl service

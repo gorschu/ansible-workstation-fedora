@@ -12,28 +12,28 @@ jobs:
   - name: snap_home
     type: snap
     filesystems:
-{% for dataset in zrepl.snapshot.datasets %}
-      "{{ zrepl.poolname }}/{{ dataset }}": true
+{% for dataset in zfs_zrepl.snapshot.datasets %}
+      "{{ zfs_zrepl.poolname }}/{{ dataset }}": true
 {% endfor %}
     snapshotting:
       type: periodic
-      prefix: {{ zrepl.snapshot.prefix }}
-      interval: {{ zrepl.snapshot.interval }}
+      prefix: {{ zfs_zrepl.snapshot.prefix }}
+      interval: {{ zfs_zrepl.snapshot.interval }}
       timestamp_format: iso-8601
     pruning:
       keep:
         - type: grid
-          grid: {{ zrepl.prune_grid }}
-          regex: "^{{ zrepl.snapshot.prefix }}.*"
+          grid: {{ zfs_zrepl.prune_grid }}
+          regex: "^{{ zfs_zrepl.snapshot.prefix }}.*"
 
   # Sink for receiving backups on external drive
-  # Mount external SSD to {{ zrepl.external.mount_path }} before pushing
+  # Mount external SSD to {{ zfs_zrepl.external.mount_path }} before pushing
   - name: external_sink
     type: sink
     serve:
       type: local
       listener_name: external_backup
-    root_fs: {{ zrepl.external.dataset }}
+    root_fs: {{ zfs_zrepl.external.dataset }}
 
   # Push job for manual backup to external drive
   # Trigger with: zrepl signal wakeup push_external
@@ -44,8 +44,8 @@ jobs:
       listener_name: external_backup
       client_identity: {{ ansible_facts['hostname'] }}
     filesystems:
-{% for dataset in zrepl.snapshot.datasets %}
-      "{{ zrepl.poolname }}/{{ dataset }}": true
+{% for dataset in zfs_zrepl.snapshot.datasets %}
+      "{{ zfs_zrepl.poolname }}/{{ dataset }}": true
 {% endfor %}
     snapshotting:
       type: manual
@@ -53,9 +53,9 @@ jobs:
       keep_sender:
         - type: not_replicated
         - type: grid
-          grid: {{ zrepl.prune_grid }}
-          regex: "^{{ zrepl.snapshot.prefix }}.*"
+          grid: {{ zfs_zrepl.prune_grid }}
+          regex: "^{{ zfs_zrepl.snapshot.prefix }}.*"
       keep_receiver:
         - type: grid
-          grid: {{ zrepl.prune_grid }}
-          regex: "^{{ zrepl.snapshot.prefix }}.*"
+          grid: {{ zfs_zrepl.prune_grid }}
+          regex: "^{{ zfs_zrepl.snapshot.prefix }}.*"

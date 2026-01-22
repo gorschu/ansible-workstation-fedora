@@ -31,7 +31,7 @@
 
     - name: Install ZFS packages
       ansible.builtin.dnf:
-        name: "{{ packages_zfs }}"
+        name: "{{ zfs_packages }}"
         state: present
 
     - name: Load ZFS kernel module
@@ -88,15 +88,15 @@
     # Recovery: zfs receive from backup, then ansible skips existing datasets
     - name: Create parent data dataset
       community.general.zfs:
-        name: "{{ zrepl.poolname }}/data"
+        name: "{{ zfs_zrepl.poolname }}/data"
         state: present
         extra_zfs_properties:
-          mountpoint: "/{{ zrepl.poolname }}/data"
+          mountpoint: "/{{ zfs_zrepl.poolname }}/data"
           canmount: "on"
 
     - name: Create data child datasets
       community.general.zfs:
-        name: "{{ zrepl.poolname }}/data/{{ item }}"
+        name: "{{ zfs_zrepl.poolname }}/data/{{ item }}"
         state: present
         extra_zfs_properties:
           canmount: "on"
@@ -132,6 +132,6 @@
 
     - name: Remove ZFS packages
       ansible.builtin.dnf:
-        name: "{{ packages_zfs }}"
+        name: "{{ zfs_packages }}"
         state: absent
       failed_when: false
