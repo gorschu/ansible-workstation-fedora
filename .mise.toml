@@ -6,10 +6,12 @@ experimental = true
 pipx.uvx = true
 
 [tools]
-prek = "0.2"     # renovate: datasource=github-releases depName=j178/prek
-ansible = "13.1" # renovate: datasource=github-releases depName=ansible/ansible
+prek = "0.2"                   # renovate: datasource=github-releases depName=j178/prek
+ansible = "13.1"               # renovate: datasource=github-releases depName=ansible/ansible
 pipx = "latest"
 uv = "latest"
+python = "3.14"
+"pipx:ansible-lint" = "latest"
 
 [tasks.install-hooks]
 description = "Install pre-commit hooks using prek"
