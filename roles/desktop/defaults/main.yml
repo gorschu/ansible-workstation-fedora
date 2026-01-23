@@ -8,3 +8,5 @@ desktop_gnome_applications_dependencies:
   - gnome-tweaks
   - gnome-extensions-app
   - libgda-sqlite
+
+desktop_kde_applications_dependencies: []

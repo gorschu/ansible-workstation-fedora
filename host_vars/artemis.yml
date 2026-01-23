@@ -1,4 +1,6 @@
 ---
+kde_present: true
+
 zfs_state: present
 zfs_zrepl_state: present
 btrbk_state: present

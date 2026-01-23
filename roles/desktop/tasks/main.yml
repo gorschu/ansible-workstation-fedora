@@ -8,7 +8,15 @@
     state: present
 
 - name: Install GNOME applications/dependencies
+  when: gnome_present
   become: true
   ansible.builtin.dnf:
     name: "{{ desktop_gnome_applications_dependencies }}"
+    state: present
+
+- name: Install KDE applications/dependencies
+  when: kde_present and desktop_kde_applications_dependencies | length > 0
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ desktop_kde_applications_dependencies }}"
     state: present

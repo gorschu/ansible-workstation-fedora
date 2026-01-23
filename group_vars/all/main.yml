@@ -5,6 +5,10 @@
 
 timezone: Europe/Berlin
 
+# Desktop environment presence (set per-host in host_vars/)
+gnome_present: false
+kde_present: false
+
 # Primary user
 primary_user: gorschu
 primary_user_uid: 1000
