@@ -17,6 +17,8 @@
       tags: [networking, tailscale]
     - role: base
       tags: [base, repos]
+    - role: onepassword
+      tags: [onepassword, desktop]
     - role: notebook
       tags: [notebook, power]
     - role: desktop
