@@ -1,2 +1,5 @@
 ---
 onepassword_state: present
+onepassword_packages:
+  - 1password
+  - 1password-cli
