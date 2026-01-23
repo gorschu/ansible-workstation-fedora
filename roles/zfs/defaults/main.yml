@@ -38,5 +38,6 @@ zfs_packages:
   - zfs
   - kernel-devel
 
-# ZFS repo URL for Fedora (uses ansible_distribution_major_version)
-zfs_repo_url: "https://zfsonlinux.org/fedora/zfs-release-2-6.fc{{ ansible_distribution_major_version }}.noarch.rpm"
+# ZFS repo URL for Fedora
+zfs_repo_url: >-
+  https://zfsonlinux.org/fedora/zfs-release-3-0.fc{{ ansible_facts['distribution_major_version'] }}.noarch.rpm

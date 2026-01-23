@@ -64,11 +64,11 @@ fi
 # Install ZFS repository and packages
 echo "==> Installing ZFS repository..."
 if [[ ! -f /etc/yum.repos.d/zfs.repo ]]; then
-  dnf install -y "https://zfsonlinux.org/fedora/zfs-release-2-6$(rpm --eval "%{dist}").noarch.rpm"
+  dnf install -y "https://zfsonlinux.org/fedora/zfs-release-3-0$(rpm --eval "%{dist}").noarch.rpm"
 fi
 
-echo "==> Installing kernel headers and ZFS packages..."
-dnf install -y kernel-devel kernel-headers zfs
+echo "==> Installing requirements and ZFS packages..."
+dnf install -y gdisk kernel-devel kernel-headers zfs
 
 # Load ZFS module if needed
 if ! lsmod | grep -q "^zfs"; then
@@ -176,7 +176,7 @@ echo ""
 echo "==> Deploying zfs-load-key service..."
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-ZFS_SERVICE="${REPO_ROOT}/system-ansible/roles/zfs/files/zfs-load-key.service"
+ZFS_SERVICE="${REPO_ROOT}/roles/zfs/files/zfs-load-key.service"
 
 if [[ ! -f "$ZFS_SERVICE" ]]; then
   echo "Error: ${ZFS_SERVICE} not found"
