@@ -11,6 +11,14 @@ zfs_zrepl_state: absent
 # Prevents kernel updates from breaking ZFS module
 zfs_kernel_lock: true
 
+# Kernel packages to lock (used when zfs_kernel_lock is true)
+zfs_locked_kernel_packages:
+  - kernel
+  - kernel-core
+  - kernel-modules
+  - kernel-devel
+  - kernel-headers
+
 # zrepl configuration
 # Hybrid setup: /home stays on btrfs, important data on ZFS at tank/data/*
 # Symlinked into ~/ via user-tmpfiles.d (chezmoi)

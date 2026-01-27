@@ -1,0 +1,14 @@
+version = "1.0"
+{% for pkg in zfs_locked_kernel_packages %}
+
+[[packages]]
+name = "{{ pkg }}"
+[[packages.conditions]]
+key = "evr"
+comparator = ">="
+value = "{{ zfs_kernel_minor_version }}"
+[[packages.conditions]]
+key = "evr"
+comparator = "<"
+value = "{{ zfs_kernel_next_minor_version }}"
+{% endfor %}

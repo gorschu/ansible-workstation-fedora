@@ -39,28 +39,28 @@
         name: zfs
         state: present
 
-    # Kernel version lock to prevent ZFS breakage
-    # As per https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html
-    - name: Install dnf versionlock plugin
-      ansible.builtin.dnf:
-        name: python3-dnf-plugin-versionlock
-        state: present
+    # Kernel version lock to prevent ZFS breakage from major version updates
+    # Locks to minor version (e.g., 6.18.x) to allow patch updates while blocking major changes
+    # Uses DNF5 versionlock TOML format with evr range conditions
+    - name: Extract kernel version info
+      ansible.builtin.set_fact:
+        zfs_kernel_minor_version: "{{ ansible_facts['kernel'] | regex_search('^[0-9]+\\.[0-9]+') }}"
       when: zfs_kernel_lock | bool
 
-    - name: Check current kernel versionlock status
-      ansible.builtin.command: dnf versionlock list
-      register: zfs_versionlock_status
-      changed_when: false
-      failed_when: false
+    - name: Calculate next kernel minor version
+      vars:
+        zfs_kernel_major: "{{ zfs_kernel_minor_version.split('.')[0] }}"
+        zfs_kernel_minor_int: "{{ zfs_kernel_minor_version.split('.')[1] | int + 1 }}"
+      ansible.builtin.set_fact:
+        zfs_kernel_next_minor_version: "{{ zfs_kernel_major ~ '.' ~ zfs_kernel_minor_int }}"
       when: zfs_kernel_lock | bool
 
-    - name: Lock kernel packages to current version
-      ansible.builtin.command: dnf versionlock add kernel kernel-core kernel-modules kernel-devel kernel-headers
-      when:
-        - zfs_kernel_lock | bool
-        - "'kernel-' not in zfs_versionlock_status.stdout"
-      register: zfs_kernel_lock_result
-      changed_when: zfs_kernel_lock_result.rc == 0
+    - name: Deploy kernel versionlock config
+      ansible.builtin.template:
+        src: versionlock.toml.j2
+        dest: /etc/dnf/versionlock.toml
+        mode: "0644"
+      when: zfs_kernel_lock | bool
 
     - name: Deploy zfs-load-key service for encrypted pools
       ansible.builtin.copy:
@@ -142,10 +142,13 @@
         path: /etc/systemd/system/zfs-load-key.service
         state: absent
 
-    - name: Remove kernel versionlock
-      ansible.builtin.command: dnf versionlock delete kernel kernel-core kernel-modules kernel-devel kernel-headers
-      failed_when: false
-      changed_when: false
+    - name: Reset kernel versionlock
+      ansible.builtin.copy:
+        content: |
+          version = "1.0"
+          packages = []
+        dest: /etc/dnf/versionlock.toml
+        mode: "0644"
 
     - name: Remove ZFS packages
       ansible.builtin.dnf:

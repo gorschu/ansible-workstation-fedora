@@ -83,16 +83,6 @@ if ! zpool version &>/dev/null; then
   exit 1
 fi
 
-# Install and configure kernel versionlock
-echo "==> Installing dnf versionlock plugin..."
-dnf install -y python3-dnf-plugin-versionlock
-
-echo "==> Locking kernel to current version (prevents ZFS breakage)..."
-if ! dnf versionlock list | grep -q "kernel-"; then
-  dnf versionlock add kernel kernel-core kernel-modules kernel-devel kernel-headers
-  echo "Kernel packages locked. Use 'dnf versionlock delete kernel*' to unlock."
-fi
-
 # Show current partition layout
 echo ""
 echo "Current partition layout:"
@@ -115,12 +105,12 @@ fi
 
 echo ""
 
-# Generate ZFS encryption key
+# Generate ZFS encryption key (hex format for easier backup)
 ZFS_KEYFILE="/etc/zfs/zpool.key"
 if [[ ! -f "$ZFS_KEYFILE" ]]; then
   echo "==> Generating ZFS encryption key..."
   mkdir -p /etc/zfs
-  dd if=/dev/urandom of="$ZFS_KEYFILE" bs=32 count=1 2>/dev/null
+  openssl rand -hex 32 > "$ZFS_KEYFILE"
   chmod 600 "$ZFS_KEYFILE"
   echo "Key created: ${ZFS_KEYFILE}"
 else
@@ -163,7 +153,7 @@ else
     -O mountpoint=none \
     -O compression=zstd \
     -O encryption=aes-256-gcm \
-    -O keyformat=raw \
+    -O keyformat=hex \
     -O keylocation="file://${ZFS_KEYFILE}" \
     "$POOL_NAME" "$ZFS_DEVICE"
 
@@ -209,12 +199,6 @@ zfs list -r "$POOL_NAME"
 echo ""
 echo "WARNING: Back up ${ZFS_KEYFILE} to a secure location!"
 echo "         Without this key, your ZFS data is unrecoverable."
-echo ""
-echo "Kernel packages are version-locked to prevent ZFS breakage."
-echo "To update kernel (when ZFS supports new version):"
-echo "  1. dnf versionlock delete kernel kernel-core kernel-modules kernel-devel kernel-headers"
-echo "  2. dnf update"
-echo "  3. dnf versionlock add kernel kernel-core kernel-modules kernel-devel kernel-headers"
 echo ""
 echo "Next steps:"
 echo "1. Run ansible to configure zfs/zrepl"
