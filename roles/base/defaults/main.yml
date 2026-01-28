@@ -8,3 +8,6 @@ base_cli_utils:
   - neovim
   - bsdtar
   - yp-tools
+
+# Host-specific extra packages (override in host_vars)
+base_extra_packages: []

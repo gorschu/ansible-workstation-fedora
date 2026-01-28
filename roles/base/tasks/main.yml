@@ -34,3 +34,9 @@
       ansible.builtin.dnf:
         name: "{{ base_cli_utils }}"
         state: present
+
+    - name: Install host-specific extra packages
+      when: base_extra_packages | length > 0
+      ansible.builtin.dnf:
+        name: "{{ base_extra_packages }}"
+        state: present
