@@ -2,6 +2,15 @@
 # Incus configuration
 virtualization_incus_state: present  # present or absent
 
+# Packages required for Incus
+virtualization_incus_packages:
+  - incus
+  - incus-tools
+  - incus-selinux
+  - swtpm
+  - qemu-audio-spice
+  - remote-viewer
+
 # Users granted Incus administrative access. Override in inventory or play vars to customize.
 virtualization_incus_admin_users: >-
   {{

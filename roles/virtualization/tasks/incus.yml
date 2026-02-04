@@ -2,13 +2,7 @@
 - name: Install Incus container manager and tooling
   become: true
   ansible.builtin.dnf:
-    name:
-      - incus
-      - incus-tools
-      - incus-selinux
-      - swtpm
-      - qemu-audio-spice
-      - remote-viewer
+    name: "{{ virtualization_incus_packages }}"
     state: "{{ virtualization_incus_state }}"
   when: virtualization_incus_state == 'present'
 
@@ -72,9 +66,6 @@
 - name: Remove Incus packages
   become: true
   ansible.builtin.dnf:
-    name:
-      - incus
-      - incus-tools
-      - incus-selinux
+    name: "{{ virtualization_incus_packages }}"
     state: absent
   when: virtualization_incus_state == 'absent'
