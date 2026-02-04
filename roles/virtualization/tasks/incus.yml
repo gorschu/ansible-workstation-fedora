@@ -6,6 +6,9 @@
       - incus
       - incus-tools
       - incus-selinux
+      - swtpm
+      - qemu-audio-spice
+      - remote-viewer
     state: "{{ virtualization_incus_state }}"
   when: virtualization_incus_state == 'present'
 
