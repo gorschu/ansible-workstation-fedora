@@ -17,7 +17,7 @@
         state: present
         disable_gpg_check: true
 
-    - name: Configure YAMA ptrace scope
+    - name: Configure YAMA ptrace scope (e.g. 1Password needs this)
       ansible.posix.sysctl:
         name: kernel.yama.ptrace_scope
         value: "1"

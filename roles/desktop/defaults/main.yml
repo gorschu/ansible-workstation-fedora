@@ -9,4 +9,7 @@ desktop_gnome_applications_dependencies:
   - gnome-extensions-app
   - libgda-sqlite
 
-desktop_kde_applications_dependencies: []
+desktop_kde_applications_dependencies:
+  - qutebrowser
+  - okular
+  - gwenview
