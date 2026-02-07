@@ -2,12 +2,7 @@
 # Niri role defaults
 
 # State of Niri installation: present or absent
-niri_state: present
-
-# Use DankMaterialShell as the desktop shell
-# When true: installs DMS (all-in-one desktop shell)
-# When false: installs traditional individual components
-niri_use_dms: true
+niri_state: absent
 
 # Package lists
 niri_core_packages:
@@ -21,12 +16,9 @@ niri_core_packages:
   - plasma-integration-qt5  # KDE platform theme for Qt5 apps
 
 niri_traditional_packages:
-  - fuzzel          # Application launcher
   - mako            # Notification daemon
   - waybar          # Status bar
   - hyprlock        # Screen lock
   - hypridle        # Idle management
   - hyprpaper       # Wallpaper manager
-
-niri_dms_packages:
-  - dms             # DankMaterialShell
+  - cliphist        # Clipboard history

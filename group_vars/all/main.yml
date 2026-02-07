@@ -8,9 +8,9 @@ ansible_python_interpreter: /usr/bin/python3
 
 timezone: Europe/Berlin
 
-# Desktop environment presence (set per-host in host_vars/)
-gnome_present: false
-kde_present: false
+# Desktop environment state (set per-host in host_vars/)
+gnome_state: absent
+kde_state: absent
 
 # Primary user
 primary_user: gorschu

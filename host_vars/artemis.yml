@@ -1,5 +1,5 @@
 ---
-kde_present: true
+kde_state: present
 
 base_extra_packages:
   - unrar

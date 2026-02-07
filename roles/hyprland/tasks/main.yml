@@ -1,15 +1,60 @@
 ---
 # Hyprland window manager and Wayland ecosystem
 
-- name: Configure Hyprland
-  become: true
+- name: Hyprland installation and configuration
+  when: hyprland_state == 'present'
   block:
-    - name: "Hyprland COPR repository - {{ 'Enable' if hyprland_state == 'present' else 'Disable' }}"
+    - name: Enable Hyprland COPR repository
+      become: true
       community.general.copr:
-        name: solopasha/hyprland
-        state: "{{ 'enabled' if hyprland_state == 'present' else 'disabled' }}"
+        name: sdegler/hyprland
+        state: enabled
 
-    - name: "Hyprland ecosystem - {{ 'Install' if hyprland_state == 'present' else 'Remove' }}"
+    - name: Install Hyprland core components
+      become: true
       ansible.builtin.dnf:
-        name: "{{ hyprland_packages }}"
-        state: "{{ hyprland_state }}"
+        name: "{{ hyprland_core_packages }}"
+        state: present
+
+    # Traditional component-based desktop shell (without DMS)
+    - name: Traditional desktop shell setup
+      when: dms_state | default('absent') != 'present'
+      block:
+        - name: Install traditional Hyprland ecosystem
+          become: true
+          ansible.builtin.dnf:
+            name: "{{ hyprland_traditional_packages }}"
+            state: present
+
+    # Cleanup traditional components when switching to DMS
+    - name: Cleanup traditional components (switching to DMS)
+      when: dms_state | default('absent') == 'present'
+      block:
+        - name: Remove traditional ecosystem packages
+          become: true
+          ansible.builtin.dnf:
+            name: "{{ hyprland_traditional_packages }}"
+            state: absent
+
+# Removal/cleanup when hyprland_state == 'absent'
+- name: Hyprland removal
+  when: hyprland_state == 'absent'
+  block:
+    - name: Remove Hyprland core components
+      become: true
+      ansible.builtin.dnf:
+        name: "{{ hyprland_core_packages }}"
+        state: absent
+
+    - name: Remove traditional ecosystem components
+      become: true
+      ansible.builtin.dnf:
+        name: "{{ hyprland_traditional_packages }}"
+        state: absent
+
+    - name: Disable Hyprland COPR repository
+      become: true
+      community.general.copr:
+        name: sdegler/hyprland
+        state: disabled
+      when: niri_state | default('absent') != 'present' or dms_state | default('absent') == 'present'

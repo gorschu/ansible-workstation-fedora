@@ -43,6 +43,8 @@ zfs_data_datasets:
     mode: "0700"
   - name: media
     mode: "0700"
+  - name: mail
+    mode: "0700"
 
 # Fedora ZFS packages
 zfs_packages:

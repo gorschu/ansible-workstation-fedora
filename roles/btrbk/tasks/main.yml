@@ -109,14 +109,10 @@
             - btrbk-root.timer
             - btrbk-home.timer
 
-        - name: Remove old single btrbk units if present
+        - name: Remove old single btrbk config if present
           ansible.builtin.file:
-            path: "{{ item }}"
+            path: /etc/btrbk/btrbk.conf
             state: absent
-          loop:
-            - /etc/systemd/system/btrbk.timer
-            - /etc/systemd/system/btrbk.service
-            - /etc/btrbk/btrbk.conf
 
 - name: Remove btrbk
   when: btrbk_state | default('present') == 'absent'

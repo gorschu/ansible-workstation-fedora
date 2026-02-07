@@ -4,23 +4,35 @@
 # State of Hyprland installation: present or absent
 hyprland_state: absent
 
-# Package list
-hyprland_packages:
-  - hyprland
-  - uwsm
-  - hyprland-contrib
-  - hyprland-plugins
-  - hyprland-autoname-workspaces
-  - xdg-desktop-portal-hyprland
-  - hyprpaper
-  - hypridle
-  - hyprlock
-  - hyprshot
-  - hyprsysteminfo
-  - hyprdim
-  - hyprnome
-  - mako
-  - waybar-git
-  - swww
-  - cliphist
-  - fuzzel
+# Package lists
+hyprland_core_packages:
+  - hyprland                        # Core compositor
+  - uwsm                            # Universal Wayland Session Manager
+  - xdg-desktop-portal-hyprland     # Desktop portal
+  - hyprpolkitagent                  # Polkit auth agent
+  - hyprland-qt-support              # Qt integration
+  - hyprland-guiutils                # GUI utilities
+  - hyprqt6engine                    # Qt6 theme engine
+  - qt6ct                            # Qt6 configuration tool
+  - nwg-look                         # GTK theme settings
+  - udiskie                          # USB automounting
+  - pinentry-qt                      # GPG passphrase dialog
+  - hyprland-contrib                 # Community scripts
+  - hyprland-plugins                 # Official plugins
+  - hyprland-autoname-workspaces     # Workspace naming
+  - hyprpaper                        # Wallpaper manager
+  - hypridle                         # Idle management
+  - hyprlock                         # Screen locker
+  - hyprshot                         # Screenshots
+  - hyprsysteminfo                   # System info
+  - hyprdim                          # Window dimming
+  - hyprnome                         # GNOME-like workspace switching
+  - hyprsunset                       # Blue light filter
+  - hyprpicker                       # Color picker
+  - satty                            # Screenshot annotation
+  - pyprland                         # Plugin system
+
+hyprland_traditional_packages:
+  - hyprpanel         # Panel/bar
+  - mako              # Notification daemon
+  - cliphist          # Clipboard history

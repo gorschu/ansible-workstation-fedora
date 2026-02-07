@@ -29,6 +29,8 @@
       tags: [hyprland, wayland]
     - role: niri
       tags: [niri, wayland]
+    - role: dms
+      tags: [dms, wayland]
     - role: vicinae
       tags: [desktop, vicinae]
     - role: ghostty

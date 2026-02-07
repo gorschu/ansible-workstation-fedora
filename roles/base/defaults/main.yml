@@ -8,6 +8,8 @@ base_cli_utils:
   - neovim
   - bsdtar
   - yp-tools
+  - gnupg2-scdaemon
+  - gnupg2-smime
 
 # Host-specific extra packages (override in host_vars)
 base_extra_packages: []

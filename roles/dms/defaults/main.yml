@@ -1,0 +1,8 @@
+---
+# DankMaterialShell role defaults
+
+# State of DMS installation: present or absent
+dms_state: absent
+
+dms_packages:
+  - dms

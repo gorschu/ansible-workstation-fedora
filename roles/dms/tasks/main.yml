@@ -1,0 +1,79 @@
+---
+# DankMaterialShell desktop shell
+
+- name: DankMaterialShell installation
+  when: dms_state == 'present'
+  block:
+    - name: Enable DankMaterialShell COPR repository
+      become: true
+      community.general.copr:
+        name: avengemedia/dms
+        state: enabled
+
+    - name: Install DankMaterialShell
+      become: true
+      ansible.builtin.dnf:
+        name: "{{ dms_packages }}"
+        state: present
+
+    - name: Link DMS to Hyprland service
+      when: hyprland_state | default('absent') == 'present'
+      block:
+        - name: Ensure hyprland-session.service.wants directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/hyprland-session.service.wants"
+            state: directory
+            mode: '0755'
+
+        - name: Create DMS service symlink for Hyprland
+          ansible.builtin.file:
+            src: /usr/lib/systemd/user/dms.service
+            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/hyprland-session.service.wants/dms.service"
+            state: link
+
+    - name: Link DMS to Niri service
+      when: niri_state | default('absent') == 'present'
+      block:
+        - name: Ensure niri.service.wants directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/niri.service.wants"
+            state: directory
+            mode: '0755'
+
+        - name: Create DMS service symlink for Niri
+          ansible.builtin.file:
+            src: /usr/lib/systemd/user/dms.service
+            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/niri.service.wants/dms.service"
+            state: link
+
+- name: DankMaterialShell removal
+  when: dms_state == 'absent'
+  block:
+    - name: Remove DankMaterialShell package
+      become: true
+      ansible.builtin.dnf:
+        name: "{{ dms_packages }}"
+        state: absent
+
+    - name: Disable DankMaterialShell COPR repository
+      become: true
+      community.general.copr:
+        name: avengemedia/dms
+        state: disabled
+
+    - name: Disable DMS user service
+      ansible.builtin.systemd_service:
+        name: dms
+        enabled: false
+        scope: user
+      failed_when: false
+
+    - name: Remove DMS Hyprland wants symlink
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/hyprland-session.service.wants/dms.service"
+        state: absent
+
+    - name: Remove DMS Niri wants symlink
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/niri.service.wants/dms.service"
+        state: absent

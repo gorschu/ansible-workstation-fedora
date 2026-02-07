@@ -11,14 +11,14 @@
         name: "{{ niri_core_packages }}"
         state: present
 
-    # Traditional component-based desktop shell
+    # Traditional component-based desktop shell (without DMS)
     - name: Traditional desktop shell setup
-      when: not niri_use_dms
+      when: dms_state | default('absent') != 'present'
       block:
         - name: Enable Hyprland COPR repository
           become: true
           community.general.copr:
-            name: solopasha/hyprland
+            name: sdegler/hyprland
             state: enabled
 
         - name: Install traditional Niri ecosystem
@@ -27,79 +27,22 @@
             name: "{{ niri_traditional_packages }}"
             state: present
 
-        # Cleanup DMS if switching from DMS to traditional
-        - name: Cleanup DankMaterialShell (switching to traditional)
-          block:
-            - name: Remove DankMaterialShell package
-              become: true
-              ansible.builtin.dnf:
-                name: "{{ niri_dms_packages }}"
-                state: absent
-
-            - name: Disable DankMaterialShell COPR repository
-              become: true
-              community.general.copr:
-                name: avengemedia/dms
-                state: disabled
-
-            - name: Remove DMS service wants symlink
-              ansible.builtin.file:
-                path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/niri.service.wants/dms.service"
-                state: absent
-
-            - name: Disable DMS service
-              ansible.builtin.systemd_service:
-                name: dms
-                enabled: false
-                scope: user
-              failed_when: false
-
-    # DankMaterialShell setup
-    - name: DankMaterialShell setup
-      when: niri_use_dms
+    # Cleanup traditional components when switching to DMS
+    - name: Cleanup traditional components (switching to DMS)
+      when: dms_state | default('absent') == 'present'
       block:
-        # Cleanup traditional components if switching from traditional to DMS
-        - name: Cleanup traditional components (switching to DMS)
-          block:
-            - name: Remove traditional ecosystem packages
-              become: true
-              ansible.builtin.dnf:
-                name: "{{ niri_traditional_packages }}"
-                state: absent
-
-            - name: Disable Hyprland COPR repository
-              become: true
-              community.general.copr:
-                name: solopasha/hyprland
-                state: disabled
-              when: hyprland_state is not defined or hyprland_state != 'present'
-
-        - name: Enable DankMaterialShell COPR repository
-          become: true
-          community.general.copr:
-            name: avengemedia/dms
-            state: enabled
-
-        - name: Install DankMaterialShell
+        - name: Remove traditional ecosystem packages
           become: true
           ansible.builtin.dnf:
-            name: "{{ niri_dms_packages }}"
-            state: present
+            name: "{{ niri_traditional_packages }}"
+            state: absent
 
-        # Link DMS to Niri session (DMS starts when Niri session starts via GDM)
-        - name: Link DMS to Niri service
-          block:
-            - name: Ensure niri.service.wants directory exists
-              ansible.builtin.file:
-                path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/niri.service.wants"
-                state: directory
-                mode: '0755'
-
-            - name: Create DMS service symlink
-              ansible.builtin.file:
-                src: /usr/lib/systemd/user/dms.service
-                dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/niri.service.wants/dms.service"
-                state: link
+        - name: Disable Hyprland COPR repository
+          become: true
+          community.general.copr:
+            name: sdegler/hyprland
+            state: disabled
+          when: hyprland_state | default('absent') != 'present'
 
 # Removal/cleanup when niri_state == 'absent'
 - name: Niri removal
@@ -120,30 +63,6 @@
     - name: Disable Hyprland COPR repository
       become: true
       community.general.copr:
-        name: solopasha/hyprland
+        name: sdegler/hyprland
         state: disabled
-      when: hyprland_state is not defined or hyprland_state != 'present'
-
-    - name: Remove DankMaterialShell
-      become: true
-      ansible.builtin.dnf:
-        name: "{{ niri_dms_packages }}"
-        state: absent
-
-    - name: Disable DankMaterialShell COPR repository
-      become: true
-      community.general.copr:
-        name: avengemedia/dms
-        state: disabled
-
-    - name: Disable DMS service
-      ansible.builtin.systemd_service:
-        name: dms
-        enabled: false
-        scope: user
-      failed_when: false
-
-    - name: Remove DMS service wants symlink
-      ansible.builtin.file:
-        path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/niri.service.wants/dms.service"
-        state: absent
+      when: hyprland_state | default('absent') != 'present'

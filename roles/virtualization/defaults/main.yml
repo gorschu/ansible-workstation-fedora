@@ -9,7 +9,7 @@ virtualization_incus_packages:
   - incus-selinux
   - swtpm
   - qemu-audio-spice
-  - remote-viewer
+  - virt-viewer
 
 # Users granted Incus administrative access. Override in inventory or play vars to customize.
 virtualization_incus_admin_users: >-

@@ -23,5 +23,6 @@ networking_wifi_interface_pattern: '^wl'
 networking_wireguard_home_enabled: true
 
 # Tailscale configuration
+networking_tailscale_state: present
 # Accept routes from other devices
 networking_tailscale_accept_routes: true
